@@ -216,8 +216,8 @@ footer{padding:2.5rem 2rem;display:flex;align-items:center;justify-content:space
   <h2><span class="lang-pt">online em<br><span class="hl">3 comandos.</span></span><span class="lang-en">online in<br><span class="hl">3 commands.</span></span></h2>
   <div class="install-steps">
     <div class="install-step"><div class="step-num-big">01</div><div class="install-title"><span class="lang-pt">clonar e configurar</span><span class="lang-en">clone and configure</span></div><p class="install-body lang-pt">Clone os dois repos lado a lado. Copie o exemple.env e defina API_KEY.</p><p class="install-body lang-en">Clone both repos side by side. Copy exemple.env and set API_KEY.</p><div class="code-box"><span class="cm"># clone</span>
-git clone github.com/welitonsilva-dev/humancli-server
-git clone github.com/welitonsilva-dev/humancli-plugins
+git clone github.com/welitonsilva-dev/humancli-server.git
+git clone github.com/welitonsilva-dev/humancli-plugins.git
 <span class="cm"># configure</span>
 cp exemple.env .env</div></div>
     <div class="install-step"><div class="step-num-big">02</div><div class="install-title"><span class="lang-pt">registrar e subir</span><span class="lang-en">register and launch</span></div><p class="install-body lang-pt">go generate registra tools e plugins. docker compose sobe tudo e baixa o modelo automaticamente.</p><p class="install-body lang-en">go generate registers tools and plugins. docker compose starts everything and downloads the model.</p><div class="code-box">go generate ./...

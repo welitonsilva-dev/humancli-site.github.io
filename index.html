@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>HumanCLI — Agente IA para o terminal</title>
+<meta name="description" content="HumanCLI é um agente que interpreta linguagem natural, age de forma autônoma e observa os resultados. Loop ReAct. Local. Extensível.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--g:#00ff41;--gd:#003b00;--gm:#00cc33;--gf:#00ff4122;--bg:#020c02;--b2:#040f04;--b3:#071207}
+body{font-family:'Share Tech Mono','Courier New',monospace;background:var(--bg);color:var(--g);line-height:1.5;overflow-x:hidden}
+a{color:var(--g);text-decoration:none}
+.lang-en{display:none}.lang-pt{display:block}
+#matrix-bg{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;opacity:.07;pointer-events:none}
+nav{background:var(--bg);border-bottom:1px solid var(--g);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100}
+.nav-logo{font-size:20px;letter-spacing:2px;color:var(--g)}.nav-logo span{color:#fff}
+.nav-links{display:flex;gap:2rem;font-size:11px;letter-spacing:2px}
+.nav-links a{text-transform:uppercase;color:var(--gm);opacity:.7}.nav-links a:hover{opacity:1;color:var(--g)}
+.lang-btn{background:transparent;color:var(--g);border:1px solid var(--g);padding:3px 10px;font-family:inherit;font-size:11px;cursor:pointer;letter-spacing:2px}
+.lang-btn:hover{background:var(--gf);color:#fff}
+.hero-wrap{position:relative;border-bottom:1px solid var(--g);overflow:hidden}
+.hero{padding:4rem 2rem 3.5rem;max-width:1100px;margin:0 auto;position:relative;z-index:2}
+.hero-tag{font-size:10px;letter-spacing:4px;color:var(--gm);text-transform:uppercase;margin-bottom:1.5rem;opacity:.8}
+.hero-tag::before{content:'> ';color:var(--g)}
+h1{font-size:clamp(2.2rem,5.5vw,4.5rem);line-height:1.05;letter-spacing:-1px;margin-bottom:1.5rem;color:#fff}
+h1 .hl{color:var(--g)}
+.hero-sub{font-size:15px;color:var(--gm);max-width:580px;margin-bottom:2.5rem;line-height:1.8;opacity:.8}
+.terminal{background:#000;border:1px solid var(--g);max-width:660px;position:relative}
+.terminal::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,65,.015) 2px,rgba(0,255,65,.015) 4px);pointer-events:none;z-index:1}
+.t-bar{background:var(--gd);border-bottom:1px solid var(--g);padding:5px 12px;font-size:10px;letter-spacing:3px;color:var(--gm);display:flex;align-items:center;gap:10px}
+.t-dot{width:8px;height:8px;border:1px solid var(--gm);opacity:.5}
+.t-body{padding:1.2rem 1.4rem;font-size:13px;line-height:2.1;position:relative;z-index:2}
+.t-pr{color:var(--g)}
+.cursor{display:inline-block;width:7px;height:13px;background:var(--g);animation:blink .8s step-end infinite;vertical-align:middle}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.cta-row{display:flex;gap:1rem;margin-top:2rem;flex-wrap:wrap}
+.btn-hack{background:transparent;color:var(--g);border:1px solid var(--g);padding:9px 22px;font-family:inherit;font-size:12px;cursor:pointer;letter-spacing:2px;text-transform:uppercase;display:inline-block}
+.btn-hack:hover{background:var(--gf);color:#fff;border-color:#fff}
+.btn-ghost{background:transparent;color:var(--gm);border:1px solid #004010;padding:9px 22px;font-family:inherit;font-size:12px;cursor:pointer;letter-spacing:2px;text-transform:uppercase;display:inline-block}
+.btn-ghost:hover{border-color:var(--gm);color:var(--g)}
+section{border-bottom:1px solid #001a00;padding:4.5rem 2rem;position:relative}
+.container{max-width:1100px;margin:0 auto}
+.sec-label{font-size:10px;letter-spacing:4px;color:var(--gm);text-transform:uppercase;margin-bottom:1rem;opacity:.7}
+.sec-label::before{content:'['}.sec-label::after{content:']'}
+h2{font-size:clamp(1.6rem,3.5vw,2.8rem);color:#fff;letter-spacing:-1px;margin-bottom:2.5rem;line-height:1.1}
+h2 .hl{color:var(--g)}
+.eco-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:#001a00}
+.eco-card{background:var(--bg);padding:2rem;position:relative;transition:background .2s}
+.eco-card:hover{background:var(--b3)}
+.eco-dot{width:6px;height:6px;background:var(--g);margin-bottom:1.5rem;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.eco-name{font-size:1.3rem;color:#fff;letter-spacing:1px;margin-bottom:.75rem}
+.eco-name .hl{color:var(--g)}
+.eco-desc{font-size:13px;color:var(--gm);line-height:1.7;margin-bottom:1.5rem;opacity:.8}
+.eco-pills{display:flex;flex-wrap:wrap;gap:4px}
+.pill{font-size:10px;color:var(--gm);border:1px solid #003010;padding:2px 7px;letter-spacing:1px}
+.eco-status{position:absolute;top:1.5rem;right:1.5rem;font-size:9px;letter-spacing:3px;color:var(--g);opacity:.6}
+.loop-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#001a00}
+.loop-col{background:var(--bg);padding:2rem}
+.loop-step{padding:1rem 0;border-bottom:1px solid #001a00;display:flex;gap:1rem}
+.loop-step:last-child{border:none}
+.step-n{font-size:1.6rem;color:#002a00;min-width:32px;line-height:1}
+.step-n.active{color:var(--g)}
+.step-title{font-size:11px;letter-spacing:2px;color:#fff;text-transform:uppercase;margin-bottom:.3rem}
+.step-body{font-size:12px;color:var(--gm);line-height:1.7;opacity:.7}
+.prot-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#001a00}
+.prot-item{background:var(--bg);padding:1.2rem}
+.prot-item:hover{background:var(--b3)}
+.prot-label{font-size:9px;letter-spacing:3px;color:var(--g);text-transform:uppercase;margin-bottom:.5rem}
+.prot-body{font-size:11px;color:var(--gm);line-height:1.6;opacity:.7}
+.provider-row{display:flex;align-items:center;gap:12px;padding:.4rem 0;border-bottom:1px solid #001a00;font-size:12px}
+.p-on{color:var(--g)}.p-off{color:#002a00}
+.p-name{color:#fff;letter-spacing:1px}
+.p-note{color:#003a10;font-size:11px}
+.tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#001a00}
+.tools-col{background:var(--bg);padding:2rem}
+.tools-col h3{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--gm);margin-bottom:1.5rem;padding-bottom:.75rem;border-bottom:1px solid #001a00}
+.tool-row{display:flex;gap:1rem;padding:.5rem 0;border-bottom:1px solid #030f03}
+.t-name{font-size:12px;color:var(--g);min-width:90px;letter-spacing:1px}
+.t-desc{font-size:12px;color:var(--gm);opacity:.6}
+.sdk-block{background:#000;border:1px solid #003010;border-left:2px solid var(--g);padding:1rem 1.2rem;font-size:12px;color:var(--gm);line-height:1.9;margin-top:1.5rem;white-space:pre}
+.sdk-kw{color:var(--g)}.sdk-cm{color:#003a10}
+.install-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:#001a00}
+.install-step{background:var(--bg);padding:2rem}
+.install-step:hover{background:var(--b3)}
+.step-num-big{font-size:3.5rem;color:#001a00;line-height:1;margin-bottom:1rem}
+.install-title{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#fff;margin-bottom:1rem}
+.install-body{font-size:12px;color:var(--gm);line-height:1.7;margin-bottom:1.25rem;opacity:.7}
+.code-box{background:#000;border-left:2px solid var(--g);padding:.75rem 1rem;font-size:11px;color:var(--gm);line-height:2;white-space:pre}
+.cm{color:#003a10}
+footer{padding:2.5rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;max-width:1100px;margin:0 auto}
+.f-brand{font-size:18px;letter-spacing:2px;color:var(--g)}.f-brand span{color:#fff}
+.f-links{display:flex;gap:1.5rem;font-size:10px;letter-spacing:2px;color:#003a10}
+.f-links a:hover{color:var(--g)}
+@media(max-width:700px){.nav-links{display:none}.loop-grid,.tools-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">human<span>cli</span></div>
+  <div class="nav-links">
+    <a href="#eco"><span class="lang-pt">sistema</span><span class="lang-en">system</span></a>
+    <a href="#how"><span class="lang-pt">como funciona</span><span class="lang-en">how it works</span></a>
+    <a href="#tools">tools</a>
+    <a href="#install"><span class="lang-pt">instalar</span><span class="lang-en">install</span></a>
+  </div>
+  <button class="lang-btn" onclick="toggleLang()" id="lang-btn">EN</button>
+</nav>
+
+<div class="hero-wrap">
+<canvas id="matrix-bg"></canvas>
+<div class="hero">
+  <div class="hero-tag"><span class="lang-pt">agente ia · loop react · go · local · extensível</span><span class="lang-en">ai agent · react loop · go · local · extensible</span></div>
+  <h1><span class="lang-pt">você não<br>deveria <span class="hl">lembrar</span><br>de comando<br>nenhum.</span><span class="lang-en">you shouldn't<br>have to <span class="hl">remember</span><br>any command<br>at all.</span></h1>
+  <p class="hero-sub"><span class="lang-pt">HumanCLI é um agente que interpreta linguagem natural, age de forma autônoma e observa os resultados — repetindo o ciclo até concluir a tarefa.</span><span class="lang-en">HumanCLI is an agent that understands natural language, acts autonomously and observes results — looping until the task is done.</span></p>
+  <div class="terminal">
+    <div class="t-bar"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div><span>root@humancli ~ $</span></div>
+    <div class="t-body">
+      <div><span class="t-pr">$</span> humancli <span style="color:#aaffaa">"cria a pasta api e adiciona um main.go"</span></div>
+      <div id="t-lines"></div>
+      <div><span class="t-pr">$</span> <span class="cursor"></span></div>
+    </div>
+  </div>
+  <div class="cta-row">
+    <a href="#install" class="btn-hack"><span class="lang-pt">iniciar instalação</span><span class="lang-en">start install</span></a>
+    <a href="https://github.com/welitonsilva-dev/humancli-server" class="btn-ghost">github &gt;</a>
+  </div>
+</div>
+</div>
+
+<section id="eco">
+<div class="container">
+  <div class="sec-label"><span class="lang-pt">01_ecossistema</span><span class="lang-en">01_ecosystem</span></div>
+  <h2><span class="lang-pt">três módulos.<br>um <span class="hl">sistema.</span></span><span class="lang-en">three modules.<br>one <span class="hl">system.</span></span></h2>
+  <div class="eco-grid">
+    <div class="eco-card"><div class="eco-dot"></div><div class="eco-status">CORE</div><div class="eco-name">humancli-<span class="hl">server</span></div><p class="eco-desc lang-pt">Núcleo. Hospeda o LLM local ou externo, registra tools e plugins, executa o loop ReAct. Expõe API HTTP com streaming SSE em tempo real.</p><p class="eco-desc lang-en">Core. Hosts local or external LLM, registers tools and plugins, runs the ReAct loop. Exposes HTTP API with real-time SSE streaming.</p><div class="eco-pills"><span class="pill">Ollama</span><span class="pill">OpenAI</span><span class="pill">Anthropic</span><span class="pill">Groq</span><span class="pill">SSE</span><span class="pill">SQLite</span><span class="pill">Go</span></div></div>
+    <div class="eco-card"><div class="eco-dot" style="animation-delay:.5s"></div><div class="eco-status">PLUGINS</div><div class="eco-name">humancli-<span class="hl">plugins</span></div><p class="eco-desc lang-pt">Extensões externas. Cada subpasta é uma tool Go independente. Implemente sdk.Tool, rode go generate, tool registrada automaticamente.</p><p class="eco-desc lang-en">External extensions. Each subfolder is an independent Go tool. Implement sdk.Tool, run go generate, tool registered automatically.</p><div class="eco-pills"><span class="pill">sdk.Tool</span><span class="pill">go generate</span><span class="pill">init()</span><span class="pill">Go</span></div></div>
+    <div class="eco-card"><div class="eco-dot" style="animation-delay:1s"></div><div class="eco-status">CLIENT</div><div class="eco-name">humancli-<span class="hl">client</span></div><p class="eco-desc lang-pt">Interface CLI. Envia comandos em linguagem natural e exibe o agente agindo em tempo real via SSE.</p><p class="eco-desc lang-en">CLI interface. Sends natural language commands and shows the agent acting in real time via SSE.</p><div class="eco-pills"><span class="pill">Linux</span><span class="pill">macOS</span><span class="pill">Windows</span><span class="pill">SSE</span><span class="pill">Go</span></div></div>
+  </div>
+</div>
+</section>
+
+<section id="how">
+<div class="container">
+  <div class="sec-label"><span class="lang-pt">02_como_funciona</span><span class="lang-en">02_how_it_works</span></div>
+  <h2><span class="lang-pt">loop <span class="hl">react.</span><br>reason + act.</span><span class="lang-en">react <span class="hl">loop.</span><br>reason + act.</span></h2>
+  <div class="loop-grid">
+    <div class="loop-col">
+      <div class="loop-step"><div class="step-n active">1</div><div><div class="step-title">pipeline</div><div class="step-body lang-pt">Input passa por 5 etapas: validate → sanitize → clean → normalize → optimize.</div><div class="step-body lang-en">Input goes through 5 stages: validate → sanitize → clean → normalize → optimize.</div></div></div>
+      <div class="loop-step"><div class="step-n active">2</div><div><div class="step-title">planner prompt</div><div class="step-body lang-pt">LLM recebe histórico e decide qual tool chamar. JSON: <span style="color:var(--g);font-size:11px">{"tool":"...","confidence":0.9}</span></div><div class="step-body lang-en">LLM receives history and decides which tool to call. JSON: <span style="color:var(--g);font-size:11px">{"tool":"...","confidence":0.9}</span></div></div></div>
+      <div class="loop-step"><div class="step-n active">3</div><div><div class="step-title"><span class="lang-pt">executa tool</span><span class="lang-en">execute tool</span></div><div class="step-body lang-pt">Resultado entra no histórico. Loop repete.</div><div class="step-body lang-en">Result enters history. Loop repeats.</div></div></div>
+      <div class="loop-step"><div class="step-n active" style="color:#aaffaa">4</div><div><div class="step-title">finalizer prompt</div><div class="step-body lang-pt">tool="none" → resposta final em linguagem natural. Loop encerra.</div><div class="step-body lang-en">tool="none" → final natural language response. Loop ends.</div></div></div>
+    </div>
+    <div class="loop-col" style="padding:0">
+      <div class="prot-grid">
+        <div class="prot-item"><div class="prot-label">confidence guard</div><p class="prot-body lang-pt">Tools destrutivas bloqueadas se confidence &lt; 0.8.</p><p class="prot-body lang-en">Destructive tools blocked if confidence &lt; 0.8.</p></div>
+        <div class="prot-item"><div class="prot-label">max iterations</div><p class="prot-body lang-pt">Loop encerra após N ciclos. Padrão: 10.</p><p class="prot-body lang-en">Loop ends after N cycles. Default: 10.</p></div>
+        <div class="prot-item"><div class="prot-label"><span class="lang-pt">deduplicação</span><span class="lang-en">deduplication</span></div><p class="prot-body lang-pt">Mesma tool + params repetidos encerra loop.</p><p class="prot-body lang-en">Same tool + repeated params ends loop.</p></div>
+        <div class="prot-item"><div class="prot-label"><span class="lang-pt">confirmação</span><span class="lang-en">confirmation</span></div><p class="prot-body lang-pt">Ops destrutivas exigem confirmed: true.</p><p class="prot-body lang-en">Destructive ops require confirmed: true.</p></div>
+      </div>
+      <div style="background:var(--bg);padding:2rem;border-top:1px solid #001a00">
+        <div style="font-size:10px;letter-spacing:3px;color:var(--gm);text-transform:uppercase;margin-bottom:1.25rem;opacity:.7"><span class="lang-pt">provedores de ia</span><span class="lang-en">ai providers</span></div>
+        <div class="provider-row"><span class="p-on">●</span><span class="p-name">ollama</span><span style="color:var(--g);font-size:10px;letter-spacing:1px"><span class="lang-pt">local · grátis · privado</span><span class="lang-en">local · free · private</span></span></div>
+        <div class="provider-row"><span class="p-off">○</span><span class="p-name">openai</span><span class="p-note">roadmap</span></div>
+        <div class="provider-row"><span class="p-off">○</span><span class="p-name">anthropic</span><span class="p-note">roadmap</span></div>
+        <div class="provider-row" style="border:none"><span class="p-off">○</span><span class="p-name">groq</span><span class="p-note">roadmap</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section id="tools">
+<div class="container">
+  <div class="sec-label"><span class="lang-pt">03_tools_nativas</span><span class="lang-en">03_native_tools</span></div>
+  <h2><span class="lang-pt">o que o agente<br>já <span class="hl">sabe fazer.</span></span><span class="lang-en">what the agent<br>already <span class="hl">knows.</span></span></h2>
+  <div class="tools-grid">
+    <div class="tools-col">
+      <h3>filesystem</h3>
+      <div class="tool-row"><span class="t-name">fs_cd</span><span class="t-desc lang-pt">muda diretório de trabalho</span><span class="t-desc lang-en">change working directory</span></div>
+      <div class="tool-row"><span class="t-name">fs_list</span><span class="t-desc lang-pt">lista arquivos e pastas</span><span class="t-desc lang-en">list files and folders</span></div>
+      <div class="tool-row"><span class="t-name">fs_mkdir</span><span class="t-desc lang-pt">cria diretório (com -p)</span><span class="t-desc lang-en">create directory (with -p)</span></div>
+      <div class="tool-row"><span class="t-name">fs_touch</span><span class="t-desc lang-pt">cria arquivo ou atualiza ts</span><span class="t-desc lang-en">create file or update ts</span></div>
+      <div class="tool-row"><span class="t-name">fs_rm</span><span class="t-desc lang-pt">remove arquivo · confirmar</span><span class="t-desc lang-en">remove file · confirm</span></div>
+      <div class="tool-row"><span class="t-name">fs_rmdir</span><span class="t-desc lang-pt">remove pasta vazia · confirmar</span><span class="t-desc lang-en">remove empty dir · confirm</span></div>
+      <h3 style="margin-top:2rem"><span class="lang-pt">utilitários</span><span class="lang-en">utilities</span></h3>
+      <div class="tool-row"><span class="t-name">tool_list</span><span class="t-desc lang-pt">lista todas as tools</span><span class="t-desc lang-en">list all tools</span></div>
+      <div class="tool-row"><span class="t-name">echo</span><span class="t-desc lang-pt">repete mensagem</span><span class="t-desc lang-en">repeat message</span></div>
+      <div class="tool-row"><span class="t-name">double_echo</span><span class="t-desc lang-pt">duplica mensagem</span><span class="t-desc lang-en">duplicate message</span></div>
+    </div>
+    <div class="tools-col">
+      <h3><span class="lang-pt">crie seu plugin</span><span class="lang-en">build your plugin</span></h3>
+      <p style="font-size:12px;color:var(--gm);line-height:1.8;opacity:.8;margin-bottom:1rem"><span class="lang-pt">Qualquer coisa vira uma tool. Implemente a interface, registre no init(), rode go generate. Git, Docker, HTTP, Slack — sem limite.</span><span class="lang-en">Anything becomes a tool. Implement the interface, register in init(), run go generate. Git, Docker, HTTP, Slack — no limits.</span></p>
+      <div class="sdk-block"><span class="sdk-cm">// sdk.Tool interface</span>
+<span class="sdk-kw">type</span> Tool <span class="sdk-kw">interface</span> {
+  Name()        <span class="sdk-kw">string</span>
+  Description() <span class="sdk-kw">string</span>
+  Execute(params <span class="sdk-kw">map</span>[<span class="sdk-kw">string</span>]<span class="sdk-kw">interface</span>{}) (<span class="sdk-kw">any</span>, <span class="sdk-kw">error</span>)
+}
+
+<span class="sdk-cm">// register in init()</span>
+<span class="sdk-kw">func</span> init() {
+  sdk.Register(&amp;MyTool{})
+}</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section id="install">
+<div class="container">
+  <div class="sec-label"><span class="lang-pt">04_instalação</span><span class="lang-en">04_install</span></div>
+  <h2><span class="lang-pt">online em<br><span class="hl">3 comandos.</span></span><span class="lang-en">online in<br><span class="hl">3 commands.</span></span></h2>
+  <div class="install-steps">
+    <div class="install-step"><div class="step-num-big">01</div><div class="install-title"><span class="lang-pt">clonar e configurar</span><span class="lang-en">clone and configure</span></div><p class="install-body lang-pt">Clone os dois repos lado a lado. Copie o exemple.env e defina API_KEY.</p><p class="install-body lang-en">Clone both repos side by side. Copy exemple.env and set API_KEY.</p><div class="code-box"><span class="cm"># clone</span>
+git clone github.com/weliton/humancli-server
+git clone github.com/weliton/humancli-plugins
+<span class="cm"># configure</span>
+cp exemple.env .env</div></div>
+    <div class="install-step"><div class="step-num-big">02</div><div class="install-title"><span class="lang-pt">registrar e subir</span><span class="lang-en">register and launch</span></div><p class="install-body lang-pt">go generate registra tools e plugins. docker compose sobe tudo e baixa o modelo automaticamente.</p><p class="install-body lang-en">go generate registers tools and plugins. docker compose starts everything and downloads the model.</p><div class="code-box">go generate ./...
+docker compose up
+<span class="cm"># aguarda download do modelo</span>
+<span class="cm"># server: localhost:8081</span></div></div>
+    <div class="install-step"><div class="step-num-big">03</div><div class="install-title"><span class="lang-pt">instalar cliente</span><span class="lang-en">install client</span></div><p class="install-body lang-pt">Um curl instala o cliente. humancli init configura tudo.</p><p class="install-body lang-en">One curl installs the client. humancli init configures everything.</p><div class="code-box"><span class="cm"># linux / auto arch</span>
+curl -fsSL .../install.sh | sh
+humancli init
+<span style="color:var(--g)">humancli "sua tarefa aqui"</span></div></div>
+  </div>
+  <div style="border:1px solid #001a00;border-top:none;padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;background:var(--bg)">
+    <span style="font-size:11px;color:#003a10;letter-spacing:2px">Go 1.21+ · Docker · Linux · macOS · Windows</span>
+    <a href="https://github.com/welitonsilva-dev/humancli-server" class="btn-hack"><span class="lang-pt">ver no github &gt;</span><span class="lang-en">view on github &gt;</span></a>
+  </div>
+</div>
+</section>
+
+<div style="border-top:1px solid var(--g)">
+<footer>
+  <div class="f-brand">human<span>cli</span></div>
+  <div class="f-links"><a href="https://github.com/welitonsilva-dev/humancli-server">server</a><a href="https://github.com/welitonsilva-dev/humancli-plugins">plugins</a><a href="https://github.com/welitonsilva-dev/humancli-client">client</a></div>
+  <div style="font-size:10px;color:#002a00;letter-spacing:1px"><span class="lang-pt">feito em go. sem frescura.</span><span class="lang-en">made in go. no nonsense.</span></div>
+</footer>
+</div>
+
+<script>
+let lang='pt';
+function toggleLang(){lang=lang==='pt'?'en':'pt';document.getElementById('lang-btn').textContent=lang==='pt'?'EN':'PT';document.querySelectorAll('.lang-pt').forEach(e=>e.style.display=lang==='pt'?'':'none');document.querySelectorAll('.lang-en').forEach(e=>e.style.display=lang==='en'?'':'none');}
+const lines=[{s:'  ✓ fs_mkdir',c:'#00ff41'},{s:'  ✓ fs_touch',c:'#00ff41'},{s:'    /api/main.go',c:'#005a14'},{s:''},{s:'  pasta criada com main.go dentro.',c:'#aaffaa'},{s:''}];
+const el=document.getElementById('t-lines');let i=0;
+function typeNext(){if(i>=lines.length)return;const l=lines[i++];const d=document.createElement('div');if(l.s){d.textContent=l.s;d.style.color=l.c||'inherit';}else{d.innerHTML='&nbsp;'}el.appendChild(d);setTimeout(typeNext,i<3?600:300);}
+setTimeout(typeNext,1200);
+const canvas=document.getElementById('matrix-bg');const ctx=canvas.getContext('2d');
+function resizeCanvas(){canvas.width=canvas.offsetWidth;canvas.height=canvas.offsetHeight;}resizeCanvas();
+const cols=Math.floor(canvas.width/14);const drops=Array(cols).fill(1);const chars='アイウエオカキクケコ01アイウエオ'.split('');
+function drawMatrix(){ctx.fillStyle='rgba(2,12,2,0.05)';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#00ff41';ctx.font='12px monospace';drops.forEach((y,x)=>{const c=chars[Math.floor(Math.random()*chars.length)];ctx.fillText(c,x*14,y*14);if(y*14>canvas.height&&Math.random()>.975)drops[x]=0;drops[x]++;});}
+setInterval(drawMatrix,50);
+</script>
+</body>
+</html>
